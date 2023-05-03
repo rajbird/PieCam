@@ -1,0 +1,7 @@
+Be on guard ${PERSON_NAME},
+
+PieCam has detected motion today at ${TIME_STAMP}
+Please view the attached .gif and decide the necessary actions.
+
+Yours Truly,
+PieCam

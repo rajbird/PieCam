@@ -1,0 +1,56 @@
+<html>
+  <head>
+    <title>Pi Video Surveillance DEBUG</title>
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script> 
+  </head>
+  <body>
+    <h1>Pi Video Surveillance DEBUG</h1>
+    <a href="{{ url_for('index') }}">HOME</a>
+    <p id="debug_area">
+
+    </p>
+    <script>
+        function setDebugData(){
+            $.ajax({
+                method: 'get',
+                url: '/debug_refresh',
+                success : (data) => {
+                    let j_data = JSON.parse(data);
+                    let debug_table = `
+                    <table>
+                        <tr>
+                          <td>Hostname</td><td>${j_data.hostname}</td>
+                        </tr>
+                        <tr>
+                          <td>CPU %</td><td>${j_data.cpu_percent}</td>
+                        </tr>
+                        <tr>
+                          <td>Memory %</td><td>${j_data.memory_percent}</td>
+                        </tr>
+                        <tr>
+                          <td>Disk %</td><td>${j_data.disk_percent}</td>
+                        </tr>
+                        <tr>
+                          <td>Free Disk Space</td><td>${j_data.free_space}</td>
+                        </tr>
+                        <tr>
+                          <td>Temperatures</td><td>${j_data.temperatures}</td>
+                        </tr>
+                        <tr>
+                          <td>Error</td><td>${j_data.error}</td>
+                        </tr>
+                    </table>`;
+
+                    $("#debug_area").html(debug_table);
+                } 
+            });
+        }
+
+        setDebugData();
+        setInterval(function() {
+            setDebugData();
+        }, 5000);
+        
+    </script>
+  </body>
+</html>

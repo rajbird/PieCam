@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <title>PiCam Livestream</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale-1">
+
+    <link rel="stylesheet" href="style/bootstrap.css">
+
+    <script src="script/jquery-3.4.1.js"></script>
+    <script src="script/bootstrap.min.js"></script>
+
+    <script type="text/javascript">
+        $(document).ready(() => {
+            console.log("Running")
+            $('#chatInputField').keypress(function (event) {
+                let keycode = (event.keyCode ? event.keyCode : event.which);
+                
+                let input;
+                if (keycode == '13') {
+                    let term_elem = $("#terminalPanelBody");
+                    input         = $("#chatInputField").val();
+
+                    $("#chatInputField").val("");
+
+                    appendInput(term_elem, input);
+                    
+                    if (input == '/help'){
+                        // Command to display all commands
+                        term_elem.append(`List of Current Commands: </br>
+                        <t>- /help</br>
+                        <t>- /clear</br>
+                        <t>- /set SETTING=VALUE</br>
+                        <t>- /show</br>
+                        <t>- /restart`);
+                    }
+                    else if (input == '/clear'){
+                        // Command to clear the terminal
+                        term_elem.empty();
+                    }
+                    else if (input == '/DEBUG') {
+                        // DEBUG dump command
+                        displayDebugData(term_elem); 
+                    }
+                    else if (input == '/set') {
+                        // Catching when a person does "/set" without specifying a setting. Displays possible settings
+                        term_elem.append(`Changable settings: </br>
+                        <t>- resx=[min - max]</br>
+                        <t>- resy=[min - max]</br>
+                        <t>- framerate=[min - max]</br>
+                        <t>- sensitivity=[min - max]`);
+                    }
+                    else if (input.indexOf("/set ") == 0) {
+                        // Command to change a system setting: e.g. "/set framerate=10"
+                        changeSettings(term_elem, input);
+                    }
+                    else if (input == '/show') {
+                        // Command to show the current system settings
+                        showSettings(term_elem);
+                    }
+                    else if (input == '/restart') {
+                        // Command to restart the system to settings changes. NOT IMPLEMENTED YET
+                        term_elem.append("Restarting system... this page should reload in 15 seconds.")
+                        
+                        restartProgram();
+
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 12000);
+                    }
+                    else {
+                        term_elem.append(`Unknown command: <b>${input}</b>`);
+                    }
+
+                    term_elem.append("</br>");
+                    term_elem.scrollTop = term_elem.scrollHeight; // This keeps the terminal always scrolled to the bottom
+                }
+            });
+        });
+
+        function appendInput(elem, input) {
+            elem.append(`> <b>${input}</b></br>`);
+        }
+
+        function restartProgram() {
+            $.ajax({
+                method: 'GET',
+                url: '/restart_program',
+                success: (data) => {
+                    console.log(data);
+                },
+                fail: (err) => {
+                    term.append("There was an error completing the request: " + err)
+                }
+            });
+        }
+
+        function displayDebugData(term) {
+            $.ajax({
+                method: 'GET',
+                url: '/debug_refresh',
+                success: (data) => {
+                    let j_data = JSON.parse(data);
+                    let debug_out = `DEBUG Information:</br>
+                    Hostname: ${j_data.hostname}</br>
+                    CPU %: ${j_data.cpu_percent}</br>
+                    Memory %: ${j_data.memory_percent}</br>
+                    Disk %: ${j_data.disk_percent}</br>
+                    Free Disk Space: ${j_data.free_space}</br>
+                    Temperatures: ${j_data.temperatures}</br>
+                    Error: ${j_data.error}`;
+
+                    term.append(debug_out);
+                },
+                fail: (err) => {
+                    term.append("There was an error completing the request: " + err)
+                }
+            });
+        }
+
+        function showSettings(term) {
+            $.ajax({
+                method: 'GET',
+                url: '/get_settings',
+                success: (data) => {
+                    let j_data = JSON.parse(data);
+                    let settings_out = `System Settings:</br>
+                    Resolution X: ${j_data.resx}</br>
+                    Resolution Y: ${j_data.resy}</br>
+                    Framerate: ${j_data.framerate}</br>
+                    Threshold: ${j_data.threshold}</br>
+                    Port: ${j_data.port}<br>`;
+
+                    term.append(settings_out);
+                },
+                fail: (err) => {
+                    term.append("There was an error completing the request: " + err)
+                }
+            });
+        }
+
+        function changeSettings(term, input) {
+            $.ajax({
+                method: 'GET',
+                url: '/change_settings',
+                data: {
+                    input: input
+                },
+                success: (data) => {
+                    let j_data = JSON.parse(data);
+
+                    if(j_data.success) {
+                        term.append("Setting changed successfully.<br>");
+                    } else {
+                        term.append(`There was an error changing settings using: ${input}<br>`);
+                    }
+                },
+                fail: (err) => {
+                    term.append("There was an error completing the request: " + err)
+                }
+            });
+
+        }
+    </script>
+    <style>
+    .container-fluid {
+        padding: 10px 15px;
+    }
+    .videoFeedContainer {
+        display: block;
+        text-align: center;
+    }
+    #terminalPanel {
+        width: 100%;
+        overflow: auto;
+
+        background-color: #fff;
+        border: 1px solid transparent;
+        border-radius: 4px;
+        border-color: #ddd;
+
+        font-family: Trebuchet MS, Arial, Helvetica, sans-serif;
+        margin-bottom: 20px;
+        
+        -webkit-box-shadow: 0 1px 1px rgba(0,0,0,.05);
+        box-shadow: 0 1px 1px rgba(0,0,0,.05);
+    }
+    #terminalPanelHeading {
+        color: white; 
+        background-color: #4CAF50; 
+        border-color: #ddd; 
+        padding: 10px 15px; 
+        border-bottom: 1px solid transparent; 
+        border-top-left-radius: 3px; 
+        border-top-right-radius: 3px;
+    }
+    </style>
+</head>
+
+<body>
+    <h1>CIS*4250 Security Camera</h1>
+
+    <hr>
+
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-lg-6">
+                <div class="videoFeedContainer" id="videoPlayer">
+                    <img src="{{ url_for('video_feed') }}">
+                </div>
+            </div>
+
+            <div class="col-lg-6">
+                <div id=terminalPanel>
+                    <div id=terminalPanelHeading><b>Terminal</b></div>
+                    <div id=terminalPanelBody style="padding: 15px;max-height: 400px;overflow-y: auto;">
+                        Enter a command below. (/help)<br />
+                    </div>
+                </div>
+
+                <div class="form-group" style="padding-bottom:0px">
+                    <input type="text" class="form-control" id="chatInputField" placeholder="Input a message!">
+                </div>
+
+                <button type="button" class="btn btn-success btn-lg" id="settingsBtn"
+                    onclick="location.href='settings.html';">Settings</button>
+            </div>
+        </div>
+    </div>
+
+    <hr>
+
+</body>
+
+</html>

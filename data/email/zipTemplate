@@ -1,0 +1,7 @@
+Hello ${PERSON_NAME},
+
+PieCam has compiled a zip file of all motion detected during its downtime.
+Please view the attached file and decide the necessary actions.
+
+Yours Truly,
+PieCam

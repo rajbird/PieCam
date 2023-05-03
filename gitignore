@@ -1,0 +1,6 @@
+userAccounts/users.txt
+data/motion/*
+pyimagesearch/__pycache__
+pyimagesearch/motion_detection/__pycache__
+log.txt
+__pycache__
